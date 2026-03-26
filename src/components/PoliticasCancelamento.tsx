@@ -13,28 +13,38 @@ function InfoIcon({ className = 'w-4 h-4' }: { className?: string }) {
   )
 }
 
-// Number stepper component
+// Number stepper component — integers only, typeable + arrows
 function NumberStepper({ value, onChange, disabled = false }: {
   value: number
   onChange: (v: number) => void
   disabled?: boolean
 }) {
+  const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value.replace(/\D/g, '')
+    onChange(raw === '' ? 0 : parseInt(raw, 10))
+  }
+
   return (
     <div style={{ display: 'flex', alignItems: 'center' }}>
-      <div style={{
-        width: 115, height: 32,
-        border: '1px solid #C5C5C5',
-        borderRadius: 4,
-        background: disabled ? '#E6E6E6' : '#FFFFFF',
-        display: 'flex',
-        alignItems: 'center',
-        paddingLeft: 10,
-        ...FONT,
-        fontSize: 11,
-        color: disabled ? '#9C9C9C' : '#273240',
-      }}>
-        {!disabled && value}
-      </div>
+      <input
+        type="text"
+        inputMode="numeric"
+        value={disabled ? '' : value}
+        onChange={handleInput}
+        disabled={disabled}
+        style={{
+          width: 115, height: 32,
+          border: '1px solid #C5C5C5',
+          borderRadius: 4,
+          background: disabled ? '#E6E6E6' : '#FFFFFF',
+          paddingLeft: 10, paddingRight: 32,
+          textAlign: 'right' as const,
+          ...FONT,
+          fontSize: 11,
+          color: disabled ? '#9C9C9C' : '#273240',
+          outline: 'none',
+        }}
+      />
       <div style={{ display: 'flex', flexDirection: 'column', marginLeft: -32 }}>
         <button
           disabled={disabled}
@@ -67,6 +77,69 @@ function NumberStepper({ value, onChange, disabled = false }: {
   )
 }
 
+// Currency input — numbers only, auto-formats to 2 decimal places with comma, EUR/% toggle inside
+function CurrencyInput({ value, onChange, disabled = false, unit, onToggleUnit }: {
+  value: string
+  onChange: (v: string) => void
+  disabled?: boolean
+  unit: 'EUR' | '%'
+  onToggleUnit: () => void
+}) {
+  const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value.replace(/[^\d]/g, '')
+    if (raw === '') { onChange(''); return }
+    const cents = parseInt(raw, 10)
+    const formatted = (cents / 100).toFixed(2).replace('.', ',')
+    onChange(formatted)
+  }
+
+  return (
+    <div style={{
+      width: 115, height: 32,
+      border: '1px solid #C5C5C5', borderRadius: 4,
+      background: disabled ? '#E6E6E6' : '#FFFFFF',
+      display: 'flex', alignItems: 'center',
+      overflow: 'hidden',
+    }}>
+      <input
+        type="text"
+        inputMode="decimal"
+        value={disabled ? '' : value}
+        onChange={handleInput}
+        disabled={disabled}
+        placeholder={disabled ? '' : '0,00'}
+        style={{
+          flex: 1, height: '100%',
+          border: 'none',
+          padding: '0 4px 0 10px',
+          fontSize: 11, color: '#273240',
+          outline: 'none',
+          background: 'transparent',
+          textAlign: 'right' as const,
+          minWidth: 0,
+          ...FONT,
+        }}
+      />
+      <button
+        onClick={disabled ? undefined : onToggleUnit}
+        type="button"
+        disabled={disabled}
+        style={{
+          border: 'none', background: 'transparent',
+          cursor: disabled ? 'default' : 'pointer',
+          display: 'flex', alignItems: 'center', gap: 2,
+          padding: '0 6px',
+          height: '100%',
+          flexShrink: 0,
+        }}
+      >
+        <span style={{ fontSize: 10, fontWeight: 700, color: disabled ? '#9C9C9C' : '#0C83D9', ...FONT }}>{unit}</span>
+        <ChevronDownIcon className="w-2 h-2" color={disabled ? '#9C9C9C' : '#0C83D9'} />
+      </button>
+    </div>
+  )
+}
+
 interface PoliticasCancelamentoProps {
   onNomeChange?: (value: string) => void
 }
@@ -80,6 +153,7 @@ export default function PoliticasCancelamento({ onNomeChange }: PoliticasCancela
   const [valorPenalidade, setValorPenalidade] = useState('')
   const [noitesPenalidade, setNoitesPenalidade] = useState(0)
   const [semExtranet, setSemExtranet] = useState(false)
+  const [moedaUnit, setMoedaUnit] = useState<'EUR' | '%'>('EUR')
 
   const handleNomeChange = (value: string) => {
     setNome(value)
@@ -145,9 +219,12 @@ export default function PoliticasCancelamento({ onNomeChange }: PoliticasCancela
 
         {/* Right column - Configurações Extranet */}
         <div style={{ flex: 1, maxWidth: 420 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
             <SectionTitle>Configurações Extranet</SectionTitle>
-            <InfoIcon className="w-4 h-4" />
+            <svg style={{ width: 16, height: 16, flexShrink: 0, position: 'relative', top: 3 }} viewBox="0 0 16 16" fill="none">
+              <circle cx="8" cy="8" r="7" stroke="#9C9C9C" strokeWidth="1" />
+              <text x="8" y="12" textAnchor="middle" fontSize="10" fontWeight="600" fill="#9C9C9C" style={{ fontFamily: "'Open Sans', sans-serif" }}>i</text>
+            </svg>
           </div>
           <div style={{ borderBottom: '1px solid #F5AF04', marginBottom: 20 }} />
 
@@ -221,32 +298,13 @@ export default function PoliticasCancelamento({ onNomeChange }: PoliticasCancela
                   />
                   <span style={{ fontSize: 11, color: '#273240', ...FONT }}>Depois dos {diasAntes} dia(s), paga</span>
                 </label>
-                <div style={{ display: 'flex', alignItems: 'center' }}>
-                  <input
-                    type="text"
-                    value={valorPenalidade}
-                    onChange={e => setValorPenalidade(e.target.value)}
-                    disabled={penalidade !== 'valor'}
-                    style={{
-                      width: 115, height: 32,
-                      border: '1px solid #C5C5C5', borderRadius: 4,
-                      padding: '0 10px',
-                      fontSize: 11, color: '#273240',
-                      outline: 'none',
-                      background: penalidade !== 'valor' ? '#E6E6E6' : '#FFFFFF',
-                      ...FONT,
-                    }}
-                  />
-                  <div style={{
-                    height: 32,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    padding: '0 5px',
-                    marginLeft: -1,
-                  }}>
-                    <span style={{ fontSize: 10, fontWeight: 700, color: '#0C83D9', ...FONT }}>EUR</span>
-                    <ChevronDownIcon className="w-2 h-2" color="#0C83D9" />
-                  </div>
-                </div>
+                <CurrencyInput
+                  value={valorPenalidade}
+                  onChange={setValorPenalidade}
+                  disabled={penalidade !== 'valor'}
+                  unit={moedaUnit}
+                  onToggleUnit={() => setMoedaUnit(u => u === 'EUR' ? '%' : 'EUR')}
+                />
               </div>
 
               {/* Sub-radio: Depois dos X dias, paga noites */}
@@ -280,7 +338,7 @@ export default function PoliticasCancelamento({ onNomeChange }: PoliticasCancela
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
-    <p style={{ fontSize: 13, fontWeight: 700, color: '#F5AF04', marginBottom: 8, ...FONT }}>
+    <p style={{ fontSize: 13, fontWeight: 700, color: '#F5AF04', marginBottom: 5, ...FONT }}>
       {children}
     </p>
   )

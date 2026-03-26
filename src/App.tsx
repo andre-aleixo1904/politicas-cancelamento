@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import Navbar from './components/Navbar'
 import Sidebar from './components/Sidebar'
-import { StarIcon, RefreshIcon } from './components/Icons'
+import { RefreshIcon } from './components/Icons'
 import PoliticasCancelamento from './components/PoliticasCancelamento'
 
 const FONT = { fontFamily: "'Open Sans', sans-serif" }
@@ -48,9 +48,6 @@ function App() {
           {/* Page header with dynamic title and action buttons */}
           <div style={{ height: 57, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <button style={{ padding: 0, border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex' }}>
-                <StarIcon className="w-[20px] h-[20px]" color="#9C9C9C" />
-              </button>
               <span style={{ fontSize: 14, fontWeight: 700, color: '#273240', ...FONT }}>
                 {nome.trim() || 'Nova Política de Cancelamento'}
               </span>
