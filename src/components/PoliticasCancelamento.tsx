@@ -140,6 +140,170 @@ function CurrencyInput({ value, onChange, disabled = false, unit, onToggleUnit }
   )
 }
 
+// Timeline graph showing the cancellation policy visually
+function CancelamentoTimeline({ condicao, diasAntes, penalidade, valorPenalidade, noitesPenalidade, moedaUnit }: {
+  condicao: 'sempre' | 'ate'
+  diasAntes: number
+  penalidade: 'valor' | 'noites'
+  valorPenalidade: string
+  noitesPenalidade: number
+  moedaUnit: 'EUR' | '%'
+}) {
+  // Example check-in date: 31 December
+  const checkinLabel = '31 Dez'
+
+  // Build penalty text
+  const getPenaltyText = () => {
+    if (penalidade === 'valor') {
+      const val = valorPenalidade || '0,00'
+      return `O hóspede paga ${val} ${moedaUnit}`
+    }
+    return `O hóspede paga ${noitesPenalidade} noite(s)`
+  }
+
+  // Deadline label
+  const deadlineLabel = condicao === 'ate'
+    ? `${diasAntes} dia(s) antes`
+    : null
+
+  const DOT = 10
+  const LINE_H = 4
+
+  // Dynamic split position: more days = further left from check-in
+  // Clamp between 20% and 85% of the timeline
+  const splitPct = Math.max(20, Math.min(85, 90 - diasAntes * 2))
+
+  return (
+    <div style={{
+      background: '#F5F5F5', borderRadius: 6,
+      border: '1px solid #E6E6E6',
+      padding: '20px 24px',
+      marginTop: 30,
+    }}>
+      <p style={{ fontSize: 11, fontWeight: 700, color: '#273240', marginBottom: 20, ...FONT }}>
+        Exemplo de Cancelamento <span style={{ fontWeight: 400 }}>com check-in dia 31 Dezembro</span>
+      </p>
+
+      {/* Labels row above the line */}
+      <div style={{ display: 'flex', alignItems: 'flex-end', marginBottom: 8, position: 'relative' }}>
+        {/* Reserva Confirmada */}
+        <div style={{ flex: 0, minWidth: 0 }}>
+          <span style={{
+            fontSize: 11, fontWeight: 600, color: '#273240',
+            background: '#FFFFFF', border: '1px solid #E6E6E6', borderRadius: 3,
+            padding: '3px 8px', whiteSpace: 'nowrap',
+            ...FONT,
+          }}>Reserva Confirmada</span>
+        </div>
+
+        <div style={{ flex: 1 }} />
+
+        {/* Deadline label */}
+        {condicao === 'ate' && (
+          <div style={{ position: 'absolute', left: `${splitPct}%`, transform: 'translateX(-50%)' }}>
+            <span style={{
+              fontSize: 11, fontWeight: 600, color: '#273240',
+              background: '#FFFFFF', border: '1px solid #E6E6E6', borderRadius: 3,
+              padding: '3px 8px', whiteSpace: 'nowrap',
+              ...FONT,
+            }}>{deadlineLabel}</span>
+          </div>
+        )}
+
+        {/* Check-in */}
+        <div style={{ position: 'absolute', right: 0 }}>
+          <span style={{
+            fontSize: 11, fontWeight: 600, color: '#273240',
+            background: '#FFFFFF', border: '1px solid #E6E6E6', borderRadius: 3,
+            padding: '3px 8px', whiteSpace: 'nowrap',
+            ...FONT,
+          }}>{checkinLabel} (Check-in)</span>
+        </div>
+      </div>
+
+      {/* Timeline bar */}
+      <div style={{ position: 'relative', height: DOT, display: 'flex', alignItems: 'center' }}>
+        {condicao === 'sempre' ? (
+          // Full green line
+          <>
+            <div style={{
+              position: 'absolute', left: 0, right: 0, top: (DOT - LINE_H) / 2,
+              height: LINE_H, background: '#4BAF4F', borderRadius: 2,
+            }} />
+            {/* Start dot */}
+            <div style={{
+              width: DOT, height: DOT, borderRadius: '50%',
+              background: '#4BAF4F', border: '2px solid #4BAF4F',
+              position: 'absolute', left: 0, zIndex: 1,
+            }} />
+            {/* End dot — check-in */}
+            <div style={{
+              width: DOT, height: DOT, borderRadius: '50%',
+              background: '#FFFFFF', border: '2px solid #4BAF4F',
+              position: 'absolute', right: 0, zIndex: 1,
+            }} />
+          </>
+        ) : (
+          // Green + Red split
+          <>
+            {/* Green segment */}
+            <div style={{
+              position: 'absolute', left: 0, width: `${splitPct}%`, top: (DOT - LINE_H) / 2,
+              height: LINE_H, background: '#4BAF4F', borderRadius: '2px 0 0 2px',
+            }} />
+            {/* Red segment */}
+            <div style={{
+              position: 'absolute', left: `${splitPct}%`, right: 0, top: (DOT - LINE_H) / 2,
+              height: LINE_H, background: '#FF0000', borderRadius: '0 2px 2px 0',
+            }} />
+            {/* Start dot — green */}
+            <div style={{
+              width: DOT, height: DOT, borderRadius: '50%',
+              background: '#4BAF4F', border: '2px solid #4BAF4F',
+              position: 'absolute', left: 0, zIndex: 1,
+            }} />
+            {/* Deadline dot — transition */}
+            <div style={{
+              width: DOT, height: DOT, borderRadius: '50%',
+              background: '#FFFFFF', border: '2px solid #F5AF04',
+              position: 'absolute', left: `${splitPct}%`, transform: 'translateX(-50%)', zIndex: 1,
+            }} />
+            {/* Check-in dot */}
+            <div style={{
+              width: DOT, height: DOT, borderRadius: '50%',
+              background: '#FFFFFF', border: '2px solid #FF0000',
+              position: 'absolute', right: 0, zIndex: 1,
+            }} />
+          </>
+        )}
+      </div>
+
+      {/* Labels row below the line */}
+      <div style={{ position: 'relative', marginTop: 8 }}>
+        {/* Left label — always visible */}
+        <div style={{ position: 'absolute', left: 0, top: 0 }}>
+          <p style={{ fontSize: 11, fontWeight: 600, color: '#273240', whiteSpace: 'nowrap', ...FONT }}>A partir da data da reserva</p>
+          <p style={{ fontSize: 11, fontWeight: 400, color: '#273240', whiteSpace: 'nowrap', ...FONT }}>O cancelamento é gratuito</p>
+        </div>
+
+        {/* Right label — aligned to deadline position, not check-in */}
+        {condicao === 'ate' && (
+          <div style={{ position: 'absolute', left: `${splitPct}%`, top: 0, transform: 'translateX(-50%)', textAlign: 'center' }}>
+            <p style={{ fontSize: 11, fontWeight: 600, color: '#273240', whiteSpace: 'nowrap', ...FONT }}>A partir das 00h00</p>
+            <p style={{ fontSize: 11, fontWeight: 400, color: '#273240', whiteSpace: 'nowrap', ...FONT }}>{getPenaltyText()}</p>
+          </div>
+        )}
+
+        {/* Spacer to maintain height */}
+        <div style={{ visibility: 'hidden' }}>
+          <p style={{ fontSize: 11, lineHeight: '16px', ...FONT }}>&nbsp;</p>
+          <p style={{ fontSize: 11, lineHeight: '16px', ...FONT }}>&nbsp;</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 interface PoliticasCancelamentoProps {
   onNomeChange?: (value: string) => void
 }
@@ -245,8 +409,8 @@ export default function PoliticasCancelamento({ onNomeChange }: PoliticasCancela
         </div>
       </div>
 
-      {/* Condições de Cancelamento - full width across both columns */}
-      <div style={{ marginTop: 40 }}>
+      {/* Condições de Cancelamento - same width as the two columns above */}
+      <div style={{ marginTop: 40, maxWidth: 920 }}>
         <SectionTitle>Condições de Cancelamento</SectionTitle>
         <div style={{ borderBottom: '1px solid #F5AF04', marginBottom: 20 }} />
 
@@ -328,6 +492,16 @@ export default function PoliticasCancelamento({ onNomeChange }: PoliticasCancela
               </div>
             </div>
           )}
+
+          {/* Timeline visualization */}
+          <CancelamentoTimeline
+            condicao={condicao}
+            diasAntes={diasAntes}
+            penalidade={penalidade}
+            valorPenalidade={valorPenalidade}
+            noitesPenalidade={noitesPenalidade}
+            moedaUnit={moedaUnit}
+          />
         </div>
       </div>
     </div>
